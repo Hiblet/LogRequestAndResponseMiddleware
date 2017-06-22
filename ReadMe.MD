@@ -12,7 +12,7 @@ This class is an AspNetCore middleware class to log the request and response dat
 ### LogRequestAndResponseMiddleware.cs
 
 A single file, containing a single class.
-The class takes an injected logger object, and attempts to log using that object, so this will work with any logger implement Microsoft.Extensions.Logging.ILogger type interfaces.
+The class takes an injected logger object, and attempts to log using that object, so this will work with any logger implementing Microsoft.Extensions.Logging.ILogger type interfaces.
 
 
 ## Installation
@@ -38,9 +38,9 @@ Function bloat should be avoided.
 This work is drawn from several sources, and attempts to unify the approaches.
 Additionally, this class prevents exceptions that occur for cached static files.
 
-   http://www.sulhome.com/blog/10/log-asp-net-core-request-and-response-using-middleware
-   https://stackoverflow.com/questions/37855384/how-to-log-the-http-response-body-in-asp-net-core-1-0
-   https://stackoverflow.com/questions/43403941/how-to-read-asp-net-core-response-body
+   - http://www.sulhome.com/blog/10/log-asp-net-core-request-and-response-using-middleware
+   - https://stackoverflow.com/questions/37855384/how-to-log-the-http-response-body-in-asp-net-core-1-0
+   - https://stackoverflow.com/questions/43403941/how-to-read-asp-net-core-response-body
 
 
 ## License
