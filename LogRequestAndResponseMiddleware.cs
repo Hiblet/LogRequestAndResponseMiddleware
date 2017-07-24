@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 using System;
 using Microsoft.AspNetCore.Http.Extensions;
+using System.Collections.Generic;
+
 
 // This work brings together current approaches to logging request and response data,
 // into a single class.  
@@ -37,6 +39,24 @@ namespace NZ01
             _logger = logger;
         }
 
+        /// <summary>
+        /// Iterate an HTTP message header dictionary and dump to string, assuming the headers have been wrapped for Kestrel.
+        /// </summary>
+        /// <param name="headers">IHeaderDictionary; Either the HttpContext.Request.Headers object, or the HttpContext.Response.Headers object</param>
+        /// <param name="delim">string; Delimiter for resultant list</param>
+        /// <returns>
+        /// string; List of header key value pairs, in "Key:Value, Key:Value" format
+        /// </returns>
+        private string processKestrelHeaders(IHeaderDictionary headers, string delim = ", ")
+        {
+            List<string> listHeaders = new List<string>();
+
+            foreach (var header in headers)
+                listHeaders.Add(header.Key.Replace("Header", "") + ":" + header.Value);
+
+            return string.Join(delim, listHeaders);
+        }
+
         public async Task Invoke(HttpContext context)
         {           
             Stream originalResponseBody = context.Response.Body;
@@ -57,8 +77,11 @@ namespace NZ01
                     memStreamRequest.Seek(0, SeekOrigin.Begin);
 
                     var url = UriHelper.GetDisplayUrl(context.Request);
+                    
                     var requestBodyText = await streamReaderRequest.ReadToEndAsync();
-                    _logger.Log(LogLevel.Information, 1, $"REQUEST METHOD:[{context.Request.Method}] REQUEST BODY:[{requestBodyText}] REQUEST URL:[{url}]", null, _defaultFormatter);
+                    string kestrelRequestHeaders = processKestrelHeaders(context.Request.Headers);
+                    _logger.Log(LogLevel.Information, 1, 
+                        $"REQUEST: METHOD:[{context.Request.Method}]; URL:[{url}]; HEADERS:[{kestrelRequestHeaders}]; BODY:[{requestBodyText}]; ", null, _defaultFormatter);
 
                     memStreamRequest.Seek(0, SeekOrigin.Begin);
                     context.Request.Body = memStreamRequest;
@@ -92,10 +115,11 @@ namespace NZ01
 
                     memStreamResponse.Position = 0;
 
+                    string kestrelResponseHeaders = processKestrelHeaders(context.Response.Headers);
                     string responseBody = await streamReaderResponse.ReadToEndAsync();
+                    string displayResponseBody = string.IsNullOrEmpty(responseBody) ? "NULL" : "\r\n" + responseBody; // If no body, mark as null, else, carriage return and log response.
 
-                    string displayResponseBody = string.IsNullOrEmpty(responseBody) ? "[null]" : "\r\n" + responseBody; // If no body, mark as null, else, carriage return and log response.
-                    _logger.Log(LogLevel.Information, 1, $"RESPONSE:{displayResponseBody}", null, _defaultFormatter);
+                    _logger.Log(LogLevel.Information, 1, $"RESPONSE: HEADERS:[{kestrelResponseHeaders}]; BODY:{displayResponseBody}", null, _defaultFormatter);
 
                     memStreamResponse.Position = 0;
 
